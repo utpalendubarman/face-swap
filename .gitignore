@@ -1,5 +1,7 @@
 .idea
 .sh
 models
-temp
+temp/*
+*.jpg
+*.png
 __pycache__
