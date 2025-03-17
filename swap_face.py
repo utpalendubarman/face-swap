@@ -1,29 +1,34 @@
-import subprocess
-# swap_face(source="face2.jpg",target="face1.jpg",output="res.jpg")
-# Function to call the original command
-def swap_face(source,target,output):
-    # Define the command as if it's typed in the terminal
-    command = [
-        "python3",  # Or "python3" depending on your environment
-        "run.py",  # Replace with the path to your script
-        "-s", f"{source}",  # Source image
-        "-t", f"{target}",  # Target image or video
-        "-o", f"{output}",  # Output directory
-        "--execution-provider", "cpu",  # Execution provider
-        "--execution-threads", "4",  # Number of threads
-    ]
-    try:
-        # Use subprocess to run the command
-        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # Print the command output
-        print("Command output:", result.stdout.decode())
-        
-        # Print any errors
-        print("Command errors:", result.stderr.decode())
-        
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while running the command: {e}")
-        print(f"Output: {e.output.decode()}")
-        print(f"Error: {e.stderr.decode()}")
-    
+import cv2
+import numpy as np
+import insightface
+from insightface.app import FaceAnalysis
+
+"""
+    face_swapper = FaceSwapper()
+    face_swapper.swap_faces("face1.jpg", "face2.jpg", "output2024.jpg")
+"""
+
+class FaceSwapper:
+    def __init__(self, model_path="models/inswapper_128.onnx"):
+        self.app = FaceAnalysis(name="buffalo_l")
+        self.app.prepare(ctx_id=0, det_size=(640, 640))
+        self.swapper = insightface.model_zoo.get_model(model_path)
+
+    def swap_faces(self, source_image_path, target_image_path, output_path):
+        source_image = cv2.imread(source_image_path)
+        target_image = cv2.imread(target_image_path)
+
+        # Detect faces
+        source_faces = self.app.get(source_image)
+        target_faces = self.app.get(target_image)
+
+        if len(source_faces) == 0 or len(target_faces) == 0:
+            raise ValueError("No faces detected in one of the images.")
+
+        # Perform face swap (assuming first detected face is the main face)
+        swapped_image = self.swapper.get(target_image, target_faces[0], source_faces[0], paste_back=True)
+
+        # Save the output
+        cv2.imwrite(output_path, swapped_image)
+        print(f"Face swapped image saved at {output_path}")
 

@@ -1,1 +1,0 @@
-python3 run.py -s face1.jpg -t face2.jpg -o out.jpg --execution-threads 4
